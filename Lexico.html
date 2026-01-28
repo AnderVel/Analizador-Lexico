@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Analizador Léxico</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    textarea { width: 100%; height: 120px; }
+    button { margin-top: 10px; padding: 8px 12px; cursor: pointer; }
+    .resultado { margin-top: 20px; }
+    table { border-collapse: collapse; width: 420px; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 8px; text-align: left; }
+    th { background: #f2f2f2; }
+    .error { color: #b00020; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Analizador Léxico</h1>
+  <p>Escribe tu código aquí:</p>
+
+  <textarea id="input">x = 2 + 5;
+y = 3 * 5;
+z = 3 - 3;
+w = 3 / 3;
+UNACH = 10;
+X = 7;
+unach = 1; tecnm = 2; upchiapas = 3;</textarea>
+
+  <button onclick="analizar()">Analizar</button>
+
+  <div class="resultado" id="resultado"></div>
+
+  <script>
+    function isLetter(c) {
+      return /^[a-zA-Z]$/.test(c);
+    }
+
+    function isDigit(c) {
+      return /^[0-9]$/.test(c);
+    }
+
+    function classifyWord(word) {
+      if (/^[a-z]$/.test(word)) return { lexema: "variable" };
+      if (/^[a-zA-Z]+$/.test(word)) return { lexema: "identificador" };
+      return { lexema: "ERROR", error: true };
+    }
+
+    function classifySymbol(s) {
+      const map = {
+        "=": "igual",
+        "+": "suma",
+        "-": "resta",
+        "*": "multiplicación",
+        "/": "división",
+        ";": "punto y coma"
+      };
+      return map[s] || "desconocido";
+    }
+
+    function Lex(input) {
+      const tokens = [];
+      let i = 0;
+
+      while (i < input.length) {
+        const c = input[i];
+
+        if (/\s/.test(c)) { i++; continue; }
+
+        if (isLetter(c)) {
+          let w = "";
+          while (i < input.length && isLetter(input[i])) {
+            w += input[i++];
+          }
+          const info = classifyWord(w);
+          tokens.push({ token: w, lexema: info.lexema, error: !!info.error });
+          continue;
+        }
+
+        if (isDigit(c)) {
+          let n = "";
+          while (i < input.length && isDigit(input[i])) {
+            n += input[i++];
+          }
+          tokens.push({ token: n, lexema: "numero" });
+          continue;
+        }
+
+        if ("=+-*/;".includes(c)) {
+          tokens.push({ token: c, lexema: classifySymbol(c) });
+          i++;
+          continue;
+        }
+
+        tokens.push({ token: c, lexema: "ERROR", error: true });
+        i++;
+      }
+
+      return tokens;
+    }
+
+    function analizar() {
+      const input = document.getElementById("input").value;
+      const tokens = Lex(input);
+
+      let html = `<table>
+        <tr><th>Token</th><th>Lexema</th></tr>`;
+
+      for (const t of tokens) {
+        const cls = t.error ? "error" : "";
+        html += `<tr>
+          <td class="${cls}">${t.token}</td>
+          <td class="${cls}">${t.lexema}</td>
+        </tr>`;
+      }
+
+      html += `</table>`;
+      document.getElementById("resultado").innerHTML = html;
+    }
+  </script>
+</body>
+</html>
